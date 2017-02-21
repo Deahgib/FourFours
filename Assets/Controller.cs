@@ -7,10 +7,15 @@ using System;
 public class Controller : MonoBehaviour {
   public Text solution;
   public Button button4;
+  public Button buttonEquals;
   public Button buttonPlus;
   public Button buttonMinus;
   public Button buttonTimes;
   public Button buttonDivide;
+  public Button buttonFactorial;
+  public Button buttonPow;
+  public Button buttonLog;
+  public Button buttonSqrt;
 
   private Expression expression;
   
@@ -20,6 +25,9 @@ public class Controller : MonoBehaviour {
 
     Button b = button4.GetComponent<Button>();
     b.onClick.AddListener(buttonFourPressed);
+
+    b = buttonEquals.GetComponent<Button>();
+    b.onClick.AddListener(buttonEqualsPressed);
 
     b = buttonPlus.GetComponent<Button>();
     b.onClick.AddListener(buttonPlusPressed);
@@ -33,6 +41,17 @@ public class Controller : MonoBehaviour {
     b = buttonDivide.GetComponent<Button>();
     b.onClick.AddListener(buttonDividePressed);
 
+    b = buttonFactorial.GetComponent<Button>();
+    b.onClick.AddListener(buttonFactorialPressed);
+
+    b = buttonPow.GetComponent<Button>();
+    b.onClick.AddListener(buttonPowPressed);
+
+    b = buttonLog.GetComponent<Button>();
+    b.onClick.AddListener(buttonLogPressed);
+
+    b = buttonSqrt.GetComponent<Button>();
+    b.onClick.AddListener(buttonSqrtPressed);
   }
 
   void updateSolutionText()
@@ -47,8 +66,11 @@ public class Controller : MonoBehaviour {
       updateSolutionText();
       // Check if solution is correct.
     }
-    
     Debug.Log("4");
+  }
+
+  void buttonEqualsPressed()
+  {
     expression.evaluate();
   }
 
@@ -67,6 +89,7 @@ public class Controller : MonoBehaviour {
     {
       updateSolutionText();
     }
+    Debug.Log("-");
   }
 
   void buttonTimesPressed()
@@ -86,6 +109,42 @@ public class Controller : MonoBehaviour {
     }
     Debug.Log("÷");
   }
+
+  void buttonFactorialPressed()
+  {
+    if (expression.add("!"))
+    {
+      updateSolutionText();
+    }
+    Debug.Log("!");
+  }
+
+  void buttonPowPressed()
+  {
+    if (expression.add("^"))
+    {
+      updateSolutionText();
+    }
+    Debug.Log("^");
+  }
+
+  void buttonLogPressed()
+  {
+    if (expression.add("l"))
+    {
+      updateSolutionText();
+    }
+    Debug.Log("log");
+  }
+
+  void buttonSqrtPressed()
+  {
+    if (expression.add("s"))
+    {
+      updateSolutionText();
+    }
+    Debug.Log("sqrt");
+  }
 }
 
 class Expression
@@ -98,6 +157,7 @@ class Expression
   private Stack<string> output;
   private Stack<string> operators;
   private Dictionary<string, int> precedence;
+  private Dictionary<string, int> associative;
 
   public Expression()
   {
@@ -113,17 +173,25 @@ class Expression
     precedence.Add("x", 3);
     precedence.Add("÷", 3);
     precedence.Add("^", 4);
-    precedence.Add("s", 4);
-    precedence.Add("!", 4);
-    precedence.Add("l", 4);
+    precedence.Add("s", 5);
+    precedence.Add("l", 6);
+    precedence.Add("!", 7);
+
+    associative = new Dictionary<string, int>();
+    associative.Add("+", 1);
+    associative.Add("-", 1);
+    associative.Add("x", 1);
+    associative.Add("÷", 1);
+    associative.Add("^", 2);
+    associative.Add("s", 1);
+    associative.Add("l", 1);
+    associative.Add("!", 1);
   }
 
   public double evaluate()
   {
     shuntingYard();
     Debug.Log(control + " -> " + rpExpression);
-
-
 
     // Do recursive expression solving
     // Check for () blocks. recall evaluate with contents of block
@@ -150,6 +218,7 @@ class Expression
         {
           for (int j = 0; j < operators.Count; j++)
           {
+            // Add associative layer check here. 
             if (operators.Count > 0 && precedence[operators.Peek()] >= precedence[token])
             {
               output.Push(operators.Pop());
