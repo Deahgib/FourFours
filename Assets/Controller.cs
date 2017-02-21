@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 using System;
 
 public class Controller : MonoBehaviour {
@@ -15,7 +16,7 @@ public class Controller : MonoBehaviour {
   
   void Start () {
     expression = new Expression();
-    expression.output = "";
+    expression.control = "";
 
     Button b = button4.GetComponent<Button>();
     b.onClick.AddListener(buttonFourPressed);
@@ -36,7 +37,7 @@ public class Controller : MonoBehaviour {
 
   void updateSolutionText()
   {
-    solution.text = expression.output;
+    solution.text = expression.control;
   }
 
   void buttonFourPressed()
@@ -91,16 +92,36 @@ class Expression
 {
 
 
-  public string output;
+  public string control;
   public string rpExpression;
+
+  private Stack<string> output;
+  private Stack<string> operators;
+  private Dictionary<string, int> precedence;
+
+  public Expression()
+  {
+
+    rpExpression = "";
+    control = "";
+
+    output = new Stack<string>();
+    operators = new Stack<string>();
+    precedence = new Dictionary<string, int>();
+    precedence.Add("+", 2);
+    precedence.Add("-", 2);
+    precedence.Add("x", 3);
+    precedence.Add("÷", 3);
+    precedence.Add("^", 4);
+    precedence.Add("s", 4);
+    precedence.Add("!", 4);
+    precedence.Add("l", 4);
+  }
 
   public double evaluate()
   {
-    parse();
-    rpExpression = "";
-    convertToRP(output);
-    Debug.Log(output + " -> " + rpExpression);
-    solve();
+    shuntingYard();
+    Debug.Log(control + " -> " + rpExpression);
 
 
 
@@ -110,99 +131,94 @@ class Expression
     return 0.0;
   }
 
-  private bool parse()
+  private void shuntingYard()
   {
-
-    return true;
-  }
-
-  private void convertToRP(string expr)
-  {
-
-    bool blockFound = false;
-    int stIdx = 0; ;
-    int refCounter = 0;
-    for (int i = 0; i < expr.Length; i++)
+    output.Clear();
+    operators.Clear();
+    rpExpression = "";
+    string token = "";
+    for (int i = 0; i < control.Length; i += token.Length)
     {
-      if (!blockFound)
+      token = getToken(i);
+      if (isNumberString(token))
       {
-        if (expr[i] == '(')
-        {
-          blockFound = true;
-          stIdx = i;
-        }
-        if (!Char.IsNumber(expr[i])) // Is operator
-        {
-          if (expr[i] == 's') // One variable for the operator one on the right.
-          {
-            if (expr[i + 1] == '(')
-            {
-              blockFound = true;
-              stIdx = i + 1;
-            }
-            else
-            {
-              rpExpression += expr[i + 1] + " ";
-            }
-            rpExpression += expr[i] + " ";
-          }
-          else if (expr[i] == '!') // One variable for the operator one on the left
-          {
-            if (Char.IsNumber(expr[i - 1]) && rpExpression.Length == 0)
-            {
-              rpExpression += expr[i-1] + " ";
-            }
-            rpExpression += expr[i] + " ";
-          }
-          else // Two varaible for operator one on either side
-          {
-            if (rpExpression.Length == 0)
-            {
-              rpExpression += expr[i - 1] + " ";
-            }
-            if (expr[i + 1] == '(')
-            {
-              blockFound = true;
-              stIdx = i + 1;
-            }
-            else
-            {
-              rpExpression += expr[i + 1] + " ";
-            }
-            rpExpression += expr[i] + " ";
-          }
-        }
+        output.Push(token);
       }
-      else if (blockFound)
+      else
       {
-        if(expr[i] == '(')
+        if (operators.Count > 0)
         {
-          refCounter++;
+          for (int j = 0; j < operators.Count; j++)
+          {
+            if (operators.Count > 0 && precedence[operators.Peek()] >= precedence[token])
+            {
+              output.Push(operators.Pop());
+            }
+            else
+            {
+              operators.Push(token);
+              break;
+            }
+          }
         }
-        else if(expr[i] == ')')
+        else
         {
-          if (refCounter == 0)
-          {
-            convertToRP(expr.Substring((stIdx + 1), i - stIdx));
-            stIdx = i;
-          }
-          else
-          {
-            refCounter--;
-          }
+          operators.Push(token);
         }
       }
     }
+    for (int i = 0; i < operators.Count; i++)
+    {
+      output.Push(operators.Pop());
+    }
   }
 
-  private double solve()
+  private string getToken(int idx)
   {
-    return 0.0;
+    if (isNumberChar(control[idx]))
+    {
+      string sub = "" + control[idx];
+      for (int i = idx+1; i < control.Length; i++)
+      {
+        if (!isNumberChar(control[i]))
+        {
+          return sub;
+        }
+        sub += control[i];
+      }
+    }
+    return "" + control[idx];
+    
+  }
+
+  private bool isNumberString(string s)
+  {
+    for (int i = 0; i < s.Length; i++)
+    {
+      if (!isNumberChar(s[i]))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private bool isNumberChar(char c)
+  {
+    if (Char.IsDigit(c))
+    {
+      return true;
+    }
+    else if (c == '.')
+    {
+      return true;
+    }
+    return false;
   }
 
   private bool insert(string exprItem)
   {
-    output += exprItem;
+    control += exprItem;
     //if (output.Length == 0)
     //{
     //  if(Char.IsNumber(exprItem[0]))
