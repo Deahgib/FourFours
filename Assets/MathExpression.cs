@@ -10,8 +10,8 @@ public class MathExpression
   public string control;
   public string rpExpression;
 
-  private Stack<string> output;
-  private Stack<string> operators;
+  private Stack output;
+  private Stack operators;
   private Dictionary<string, int> precedence;
   private Dictionary<string, int> associative;
 
@@ -21,8 +21,8 @@ public class MathExpression
     rpExpression = "";
     control = "";
 
-    output = new Stack<string>();
-    operators = new Stack<string>();
+    output = new Stack();
+    operators = new Stack();
     precedence = new Dictionary<string, int>();
     precedence.Add("+", 2);
     precedence.Add("-", 2);
@@ -33,15 +33,29 @@ public class MathExpression
     precedence.Add("l", 6);
     precedence.Add("!", 7);
 
+    precedence.Add("(", -1);
+    precedence.Add(")", -1);
+
     associative = new Dictionary<string, int>();
     associative.Add("+", 1);
     associative.Add("-", 1);
     associative.Add("x", 1);
     associative.Add("÷", 1);
     associative.Add("^", 2);
-    associative.Add("s", 1);
-    associative.Add("l", 1);
-    associative.Add("!", 1);
+    associative.Add("s", 2);
+    associative.Add("l", 2);
+    associative.Add("!", 2);
+
+    associative.Add("(", -1);
+    associative.Add(")", -1);
+  }
+
+  public void clear()
+  {
+    output.Clear();
+    operators.Clear();
+    control = "";
+    rpExpression = "";
   }
 
   public double evaluate()
@@ -49,13 +63,13 @@ public class MathExpression
     shuntingYard();
     makeDebugString();
     Debug.Log(control + " -> " + rpExpression);
-
-    // Do recursive expression solving
-    // Check for () blocks. recall evaluate with contents of block
-
-    return 0.0;
+    return solve();
   }
 
+  /* Shunting Yard algorithm explanation:
+   * https://en.wikipedia.org/wiki/Shunting-yard_algorithm
+   * This creates a reverse polish from a infix (regular) string maths expression
+   */
   private void shuntingYard()
   {
     output.Clear();
@@ -66,15 +80,15 @@ public class MathExpression
       token = getToken(i);
       if (isNumberString(token))
       {
-        output.Push(token);
+        output.Push( Double.Parse( token ) );
       }
       else
       {
         if (operators.Count > 0)
         {
-          if (precedence[operators.Peek()] >= precedence[token] && associative[token] == 1/*left associative*/)
+          if (precedence[(string)operators.Peek()] >= precedence[token] && associative[token] == 1/*left associative*/)
           {
-            while(precedence[operators.Peek()] >= precedence[token])
+            while(precedence[(string)operators.Peek()] >= precedence[token])
             {
               output.Push(operators.Pop());
               if (operators.Count == 0)
@@ -84,9 +98,9 @@ public class MathExpression
             }
             operators.Push(token);
           }
-          else if (precedence[operators.Peek()] > precedence[token] && associative[token] == 2/*right associative*/)
+          else if (precedence[(string)operators.Peek()] > precedence[token] && associative[token] == 2/*right associative*/)
           {
-            while (precedence[operators.Peek()] > precedence[token])
+            while (precedence[(string)operators.Peek()] > precedence[token])
             {
               output.Push(operators.Pop());
               if (operators.Count == 0)
@@ -95,6 +109,21 @@ public class MathExpression
               }
             }
             operators.Push(token);
+          }
+          else if(token == ")")
+          {
+            while (operators.Contains("("))
+            {
+              if ((string)operators.Peek() != "(")
+              {
+                output.Push(operators.Pop());
+              }
+              else
+              {
+                operators.Pop();
+                break;
+              }
+            }
           }
           else
           {
@@ -113,9 +142,69 @@ public class MathExpression
     }
   }
 
+  private double solve()
+  {
+    Stack rpExpr = new Stack(output);
+    Stack<double> solve = new Stack<double>();
+    double r1, r2;
+    while(rpExpr.Count > 0)
+    {
+      if (rpExpr.Peek() is Double)
+      {
+        solve.Push( (double) rpExpr.Pop() );
+      }
+      else
+      {
+        string op = (string) rpExpr.Pop();
+        switch (op)
+        {
+          case "+":
+            r2 = solve.Pop();
+            r1 = solve.Pop();
+            solve.Push(r1 + r2);
+            break;
+          case "-":
+            r2 = solve.Pop();
+            r1 = solve.Pop();
+            solve.Push(r1 - r2);
+            break;
+          case "x":
+            r2 = solve.Pop();
+            r1 = solve.Pop();
+            solve.Push(r1 * r2);
+            break;
+          case "÷":
+            r2 = solve.Pop();
+            r1 = solve.Pop();
+            solve.Push(r1 / r2);
+            break;
+          case "^":
+            r2 = solve.Pop();
+            r1 = solve.Pop();
+            solve.Push(Math.Pow(r1, r2));
+            break;
+          case "s":
+            r1 = solve.Pop();
+            solve.Push(Math.Sqrt(r1));
+            break;
+          case "l":
+            r2 = solve.Pop();
+            r1 = solve.Pop();
+            solve.Push(Math.Log(r2, r1));
+            break;
+          case "!":
+            // No factorial yet!
+            break;
+        }
+      }
+    }
+    if (solve.Count > 1) Debug.Log("ERROR ----  More than 1 number left in the solution");
+    return solve.Pop();
+  }
+
   private void makeDebugString()
   {
-    Stack<string> rev = new Stack<string>(output);
+    Stack rev = new Stack(output);
     rpExpression = "";
     while(rev.Count > 0)
     {
@@ -127,14 +216,16 @@ public class MathExpression
   {
     if (isNumberChar(control[idx]))
     {
-      string sub = "" + control[idx];
-      for (int i = idx + 1; i < control.Length; i++)
+      string sub = "";
+      for (int i = idx; i < control.Length; i++)
       {
         if (!isNumberChar(control[i]))
         {
           return sub;
+        }else
+        {
+          sub += control[i];
         }
-        sub += control[i];
       }
     }
     return "" + control[idx];
@@ -190,9 +281,6 @@ public class MathExpression
     //  }
     //  // Continue to add filters. Allowed character combinations
     //}
-
-
-
     return true;
   }
 

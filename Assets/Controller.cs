@@ -6,6 +6,7 @@ using System;
 
 public class Controller : MonoBehaviour {
   public Text solution;
+  public Text answer;
   public Button button4;
   public Button buttonEquals;
   public Button buttonPlus;
@@ -16,6 +17,11 @@ public class Controller : MonoBehaviour {
   public Button buttonPow;
   public Button buttonLog;
   public Button buttonSqrt;
+  public Button buttonLPar;
+  public Button buttonRPar;
+
+
+  public Button buttonClear;
 
   private MathExpression expression;
   
@@ -52,6 +58,22 @@ public class Controller : MonoBehaviour {
 
     b = buttonSqrt.GetComponent<Button>();
     b.onClick.AddListener(buttonSqrtPressed);
+
+    b = buttonLPar.GetComponent<Button>();
+    b.onClick.AddListener(buttonLParPressed);
+
+    b = buttonRPar.GetComponent<Button>();
+    b.onClick.AddListener(buttonRParPressed);
+
+    //---
+    b = buttonClear.GetComponent<Button>();
+    b.onClick.AddListener(clear);
+  }
+
+  void clear()
+  {
+    expression.clear();
+    updateSolutionText();
   }
 
   void updateSolutionText()
@@ -71,7 +93,16 @@ public class Controller : MonoBehaviour {
 
   void buttonEqualsPressed()
   {
-    expression.evaluate();
+    double ans = expression.evaluate();
+    if(ans % 1 < 0.000001)
+    {
+      answer.text = "" + (int)ans;
+    }
+    else
+    {
+      answer.text = "decimal nb";
+    }
+    
   }
 
   void buttonPlusPressed()
@@ -140,6 +171,24 @@ public class Controller : MonoBehaviour {
   void buttonSqrtPressed()
   {
     if (expression.add("s"))
+    {
+      updateSolutionText();
+    }
+    //Debug.Log("sqrt");
+  }
+
+  void buttonLParPressed()
+  {
+    if (expression.add("("))
+    {
+      updateSolutionText();
+    }
+    //Debug.Log("sqrt");
+  }
+
+  void buttonRParPressed()
+  {
+    if (expression.add(")"))
     {
       updateSolutionText();
     }
