@@ -217,19 +217,21 @@ public class MathExpression
     if (isNumberChar(control[idx]))
     {
       string sub = "";
-      for (int i = idx; i < control.Length; i++)
+      int i = idx;
+      while (isNumberChar(control[i]))
       {
-        if (!isNumberChar(control[i]))
+        sub += control[i];
+        i++;
+        if (control.Length == i)
         {
-          return sub;
-        }else
-        {
-          sub += control[i];
+          break;
         }
       }
+      return sub;
     }
-    return "" + control[idx];
-
+    else { 
+      return "" + control[idx];
+    }
   }
 
   private bool isNumberString(string s)
