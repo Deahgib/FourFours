@@ -110,7 +110,7 @@ public class Controller : MonoBehaviour {
   {
     solution.text = expression.control;
     counter.text = "" + fours;
-    target.text = "" + gameMode.getTarget();
+    target.text = "Target: " + gameMode.getTarget();
   }
 
   void buttonNextLevelPressed()
