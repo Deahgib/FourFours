@@ -38,8 +38,12 @@ public class Controller : MonoBehaviour {
 
   private int fours;
 
+  private Networking network;
 
   void Start () {
+
+    network = new Networking();
+
     expression = new MathExpression();
     expression.control = "";
     fours = 4;
@@ -148,6 +152,8 @@ public class Controller : MonoBehaviour {
           successModal.SetActive(true);
           compSolution.text = expression.control;
           compTarget.text = "" + gameMode.getTarget();
+
+          network.SendNewSolution(gameMode.getGameMode(), gameMode.getTarget(), expression.control);
         }
       }
 
@@ -189,7 +195,7 @@ public class Controller : MonoBehaviour {
 
   void buttonDividePressed()
   {
-    if (expression.add("÷"))
+    if (expression.add("/"))
     {
       updateSolutionText();
     }

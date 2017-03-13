@@ -2,16 +2,22 @@
 using System.Collections;
 
 public class GM_Target {
-  private int target;
-
+  private uint target;
+  private char mode;
   public GM_Target()
   {
+    mode = 'c';
     // Look up level progress in a file
     // But for now set target to 0
     target = 0;
   }
 
-  public int getTarget()
+  public char getGameMode()
+  {
+    return mode;
+  }
+
+  public uint getTarget()
   {
     return target;
   }

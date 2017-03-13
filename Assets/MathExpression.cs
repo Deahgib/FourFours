@@ -27,7 +27,7 @@ public class MathExpression
     precedence.Add("+", 2);
     precedence.Add("-", 2);
     precedence.Add("x", 3);
-    precedence.Add("÷", 3);
+    precedence.Add("/", 3);
     precedence.Add("^", 4);
     precedence.Add("s", 5);
     precedence.Add("l", 6);
@@ -40,7 +40,7 @@ public class MathExpression
     associative.Add("+", 1);
     associative.Add("-", 1);
     associative.Add("x", 1);
-    associative.Add("÷", 1);
+    associative.Add("/", 1);
     associative.Add("^", 2);
     associative.Add("s", 2);
     associative.Add("l", 2);
@@ -173,7 +173,7 @@ public class MathExpression
             r1 = solve.Pop();
             solve.Push(r1 * r2);
             break;
-          case "÷":
+          case "/":
             r2 = solve.Pop();
             r1 = solve.Pop();
             solve.Push(r1 / r2);
@@ -193,6 +193,13 @@ public class MathExpression
             solve.Push(Math.Log(r2, r1));
             break;
           case "!":
+            r1 = solve.Pop();
+            for(double i = r1-1.0; i > 1.0; i -= 1.0)
+            {
+              r1 *= i;
+            }
+            solve.Push(r1);
+
             // No factorial yet!
             break;
         }
